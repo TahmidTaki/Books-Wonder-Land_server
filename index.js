@@ -29,6 +29,7 @@ async function run() {
   try {
     const usersCollection = client.db("booksResale").collection("users");
     const booksCollection = client.db("booksResale").collection("books");
+    const bookingsCollection = client.db("booksResale").collection("bookings");
     const categoriesCollection = client.db("booksResale").collection("bookCategories");
 
     //create user
@@ -43,6 +44,30 @@ async function run() {
       const query = {};
       const result = await categoriesCollection.find(query).toArray();
       res.send(result);
+    });
+
+    //post bookings
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      const query = {
+        itemId: booking.itemId,
+        buyerEmail: booking.buyerEmail,
+      };
+      const alreadyBooked = await bookingsCollection.find(query).toArray();
+      if (alreadyBooked) {
+        const message = "You have already booked this item";
+        return res.send({ acknowledged: false, message });
+      }
+      const result = await bookingsCollection.insertOne(booking);
+      res.send();
+    });
+
+    //get books under specific category
+    app.get("/category/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { category: id };
+      const books = await booksCollection.find(query).toArray();
+      res.send(books);
     });
 
     //post add books for resale
