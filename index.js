@@ -46,6 +46,15 @@ async function run() {
       res.send(result);
     });
 
+    //get bookings by buyer email
+    app.get("/bookings", async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      const query = { buyerEmail: email };
+      const bookings = await bookingsCollection.find(query).toArray();
+      res.send(bookings);
+    });
+
     //post bookings
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
@@ -54,12 +63,12 @@ async function run() {
         buyerEmail: booking.buyerEmail,
       };
       const alreadyBooked = await bookingsCollection.find(query).toArray();
-      if (alreadyBooked) {
+      if (alreadyBooked.length) {
         const message = "You have already booked this item";
         return res.send({ acknowledged: false, message });
       }
       const result = await bookingsCollection.insertOne(booking);
-      res.send();
+      res.send(result);
     });
 
     //get books under specific category
