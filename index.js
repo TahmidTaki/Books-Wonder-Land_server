@@ -62,6 +62,26 @@ async function run() {
       res.status(403).send({ accessToken: "" });
     });
 
+    //verify admin middleware
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+
+      if (user?.role !== "admin") {
+        return res.status(403).send({ message: "This is admin only functionality" });
+      }
+      next();
+    };
+
+    //check admin
+    app.get("/users/admin/:email", async (req, res) => {
+      const mail = req.params.email;
+      const query = { email: mail };
+      const user = await usersCollection.findOne(query);
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
     //get sellers
     app.get("/sellers", async (req, res) => {
       const query = { role: "seller" };
@@ -69,11 +89,27 @@ async function run() {
       res.send(sellers);
     });
 
+    //delete sellers
+    app.delete("/sellers/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     //get buyers
     app.get("/buyers", async (req, res) => {
       const query = { role: "buyer" };
       const buyers = await usersCollection.find(query).toArray();
       res.send(buyers);
+    });
+
+    //delete buyers
+    app.delete("/buyers/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
     });
 
     //create user
@@ -89,7 +125,7 @@ async function run() {
       console.log(id);
       res.send("api hit");
     }); */
-    app.put("/sellers/verified/:id", verifyJWT, async (req, res) => {
+    app.put("/sellers/verified/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const filter = { _id: ObjectId(id) };
