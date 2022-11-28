@@ -4,6 +4,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 const app = express();
 
@@ -49,6 +50,7 @@ async function run() {
     const booksCollection = client.db("booksResale").collection("books");
     const bookingsCollection = client.db("booksResale").collection("bookings");
     const categoriesCollection = client.db("booksResale").collection("bookCategories");
+    const paymentsCollection = client.db("booksResale").collection("payments");
 
     //jwt
     app.get("/jwt", async (req, res) => {
@@ -60,6 +62,47 @@ async function run() {
         return res.send({ accessToken: token });
       }
       res.status(403).send({ accessToken: "" });
+    });
+
+    //payment intent
+    app.post("/create-payment-intent", async (req, res) => {
+      const booking = req.body;
+      const price = booking.price;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "myr",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    //save payment info to DB
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.bookingId;
+      const itmId = payment.itemId;
+      const filter = { _id: ObjectId(id) };
+      const filter2 = { _id: ObjectId(itmId) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updatedBook = {
+        $set: {
+          status: "Paid",
+        },
+      };
+      const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
+      const updatedResult2 = await booksCollection.updateOne(filter2, updatedBook, options);
+      res.send(result);
     });
 
     //verify admin middleware
@@ -177,6 +220,14 @@ async function run() {
       const query = { buyerEmail: email };
       const bookings = await bookingsCollection.find(query).toArray();
       res.send(bookings);
+    });
+
+    //get one booking by its Id
+    app.get("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingsCollection.findOne(query);
+      res.send(booking);
     });
 
     //post bookings
