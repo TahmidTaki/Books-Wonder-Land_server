@@ -74,12 +74,32 @@ async function run() {
       next();
     };
 
+    //verify admin middleware
+    const verifySeller = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+
+      if (user?.role !== "seller") {
+        return res.status(403).send({ message: "This is seller only functionality" });
+      }
+      next();
+    };
+
     //check admin
     app.get("/users/admin/:email", async (req, res) => {
       const mail = req.params.email;
       const query = { email: mail };
       const user = await usersCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
+    });
+
+    //check if user is seller
+    app.get("/users/seller/:email", async (req, res) => {
+      const mail = req.params.email;
+      const query = { email: mail };
+      const user = await usersCollection.findOne(query);
+      res.send({ isSeller: user?.role === "seller" });
     });
 
     //get sellers
@@ -183,10 +203,26 @@ async function run() {
       res.send(books);
     });
 
+    //get books under specific seller
+    app.get("/books/:email", verifyJWT, async (req, res) => {
+      const mail = req.params.email;
+      const query = { sellerEmail: mail };
+      const books = await booksCollection.find(query).toArray();
+      res.send(books);
+    });
+
     //post add books for resale
     app.post("/books", async (req, res) => {
       const book = req.body;
       const result = await booksCollection.insertOne(book);
+      res.send(result);
+    });
+
+    //delete own book by seller him/her-self
+    app.delete("/books/:id", verifyJWT, verifySeller, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await booksCollection.deleteOne(filter);
       res.send(result);
     });
   } finally {
