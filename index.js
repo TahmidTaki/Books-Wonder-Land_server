@@ -262,6 +262,13 @@ async function run() {
       res.send(books);
     });
 
+    //get advertised books
+    app.get("/advertisedbook", async (req, res) => {
+      const query = { advertised: true };
+      const books = await booksCollection.find(query).toArray();
+      res.send(books);
+    });
+
     //post add books for resale
     app.post("/books", async (req, res) => {
       const book = req.body;
@@ -285,6 +292,20 @@ async function run() {
       const updatedDoc = {
         $set: {
           reportedStatus: "reported",
+        },
+      };
+      const result = await booksCollection.updateOne(filter, updatedDoc, options);
+      res.send(result);
+    });
+
+    //advertise item by seller
+    app.put("/advertise/:id", verifyJWT, verifySeller, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          advertised: true,
         },
       };
       const result = await booksCollection.updateOne(filter, updatedDoc, options);
