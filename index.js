@@ -276,6 +276,36 @@ async function run() {
       const result = await booksCollection.deleteOne(filter);
       res.send(result);
     });
+
+    //report a book by the buyers
+    app.put("/reportitem/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          reportedStatus: "reported",
+        },
+      };
+      const result = await booksCollection.updateOne(filter, updatedDoc, options);
+      res.send(result);
+    });
+
+    //view all reported item
+    app.get("/reporteditems", verifyJWT, verifyAdmin, async (req, res) => {
+      const filter = { reportedStatus: "reported" };
+      const result = await booksCollection.find(filter).toArray();
+      res.send(result);
+    });
+
+    //delete an reported item by admin
+    //delete own book by seller him/her-self
+    app.delete("/reportedbook/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await booksCollection.deleteOne(filter);
+      res.send(result);
+    });
   } finally {
   }
 }
