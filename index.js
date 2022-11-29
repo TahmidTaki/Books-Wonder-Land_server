@@ -47,6 +47,7 @@ function verifyJWT(req, res, next) {
 async function run() {
   try {
     const usersCollection = client.db("booksResale").collection("users");
+    const usersCollectionDummy = client.db("booksResale").collection("usersDummy");
     const booksCollection = client.db("booksResale").collection("books");
     const bookingsCollection = client.db("booksResale").collection("bookings");
     const categoriesCollection = client.db("booksResale").collection("bookCategories");
@@ -181,6 +182,29 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
+
+    //create social user
+    // app.put("/userssocial", async (req, res) => {
+    //   const userEmail = req.body.email;
+    //   const query = {};
+    //   const allUsers = await usersCollection.find(query).toArray();
+    //   const emailList = allUsers.find((u) => u.email === userEmail);
+    //   if (emailList.length > 0) {
+    //     return send({ message: "Done" });
+    //   } else {
+    //     const result = await usersCollection.insertOne(user);
+    //   }
+    //   res.send(result);
+    // });
+
+    // app.post("/users", async (req, res) => {
+    //   const user = req.body;
+    //   const result = await usersCollectionDummy.createIndex(
+    //     { email: user.email, name: user.name, role: user.role },
+    //     { unique: true }
+    //   );
+    //   res.send(result);
+    // });
 
     //verify seller
     /* app.get("/sellers/verified/:id", async (req, res) => {
