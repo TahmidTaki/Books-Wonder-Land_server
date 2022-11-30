@@ -99,6 +99,7 @@ async function run() {
       const updatedBook = {
         $set: {
           status: "Paid",
+          advertised: false,
         },
       };
       const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
@@ -233,7 +234,7 @@ async function run() {
       res.send(result);
     });
 
-    //get bookings by buyer email
+    //get bookings/orders by buyer email
     app.get("/bookings", verifyJWT, async (req, res) => {
       const email = req.query.email;
       // console.log(email);
