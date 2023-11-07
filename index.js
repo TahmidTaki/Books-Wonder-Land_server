@@ -54,7 +54,7 @@ async function run() {
     const paymentsCollection = client.db("booksResale").collection("payments");
 
     //jwt
-    app.post("/jwt", async (req, res) => {
+    app.get("/jwt", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const user = await usersCollection.findOne(query);
@@ -155,7 +155,7 @@ async function run() {
     });
 
     //delete sellers
-    app.delete("/sellers/:id", verifyAdmin, async (req, res) => {
+    app.delete("/sellers/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(filter);
@@ -170,7 +170,7 @@ async function run() {
     });
 
     //delete buyers
-    app.delete("/buyers/:id", verifyAdmin, async (req, res) => {
+    app.delete("/buyers/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(filter);
@@ -213,8 +213,7 @@ async function run() {
       console.log(id);
       res.send("api hit");
     }); */
-    // app.put("/sellers/verified/:id", verifyJWT, verifyAdmin, async (req, res) =>
-    app.put("/sellers/verified/:id", verifyAdmin, async (req, res) => {
+    app.put("/sellers/verified/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const filter = { _id: ObjectId(id) };
@@ -236,8 +235,7 @@ async function run() {
     });
 
     //get bookings/orders by buyer email
-    // app.get("/bookings", verifyJWT, async (req, res) =>
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", verifyJWT, async (req, res) => {
       const email = req.query.email;
       // console.log(email);
       const decodedEmail = req.decoded.email;
@@ -282,7 +280,7 @@ async function run() {
     });
 
     //get books under specific seller
-    app.get("/books/:email", async (req, res) => {
+    app.get("/books/:email", verifyJWT, async (req, res) => {
       const mail = req.params.email;
       const query = { sellerEmail: mail };
       const books = await booksCollection.find(query).toArray();
@@ -304,7 +302,7 @@ async function run() {
     });
 
     //delete own book by seller him/her-self
-    app.delete("/books/:id", verifySeller, async (req, res) => {
+    app.delete("/books/:id", verifyJWT, verifySeller, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await booksCollection.deleteOne(filter);
@@ -312,7 +310,7 @@ async function run() {
     });
 
     //report a book by the buyers
-    app.put("/reportitem/:id", async (req, res) => {
+    app.put("/reportitem/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
@@ -326,7 +324,7 @@ async function run() {
     });
 
     //advertise item by seller
-    app.put("/advertise/:id", verifySeller, async (req, res) => {
+    app.put("/advertise/:id", verifyJWT, verifySeller, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
@@ -340,7 +338,7 @@ async function run() {
     });
 
     //view all reported item
-    app.get("/reporteditems", verifyAdmin, async (req, res) => {
+    app.get("/reporteditems", verifyJWT, verifyAdmin, async (req, res) => {
       const filter = { reportedStatus: "reported" };
       const result = await booksCollection.find(filter).toArray();
       res.send(result);
@@ -348,7 +346,7 @@ async function run() {
 
     //delete an reported item by admin
     //delete own book by seller him/her-self
-    app.delete("/reportedbook/:id", verifyAdmin, async (req, res) => {
+    app.delete("/reportedbook/:id", verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await booksCollection.deleteOne(filter);
