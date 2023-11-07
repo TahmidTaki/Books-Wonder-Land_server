@@ -54,7 +54,7 @@ async function run() {
     const paymentsCollection = client.db("booksResale").collection("payments");
 
     //jwt
-    app.get("/jwt", async (req, res) => {
+    app.post("/jwt", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const user = await usersCollection.findOne(query);
@@ -119,7 +119,7 @@ async function run() {
       next();
     };
 
-    //verify admin middleware
+    //verify seller middleware
     const verifySeller = async (req, res, next) => {
       const decodedEmail = req.decoded.email;
       const query = { email: decodedEmail };
